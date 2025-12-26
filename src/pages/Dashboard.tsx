@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
 import { Header } from '@/components/Header';
 import { TicketTable } from '@/components/TicketTable';
+import { CreateTicketDialog } from '@/components/CreateTicketDialog';
 import { mockTickets } from '@/data/mockData';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -11,16 +11,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Filter, TicketPlus, AlertTriangle, Clock, CheckCircle, Archive } from 'lucide-react';
-import { TicketStatus, TicketPriority } from '@/types/crm';
+import { Search, TicketPlus, AlertTriangle, Clock, CheckCircle, Archive } from 'lucide-react';
+import { Ticket, TicketStatus, TicketPriority } from '@/types/crm';
 
 const Dashboard = () => {
+  const [tickets, setTickets] = useState<Ticket[]>(mockTickets);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<TicketStatus | 'all'>('all');
   const [priorityFilter, setPriorityFilter] = useState<TicketPriority | 'all'>('all');
 
   const filteredTickets = useMemo(() => {
-    return mockTickets.filter((ticket) => {
+    return tickets.filter((ticket) => {
       const matchesSearch =
         ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         ticket.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -31,25 +32,32 @@ const Dashboard = () => {
 
       return matchesSearch && matchesStatus && matchesPriority;
     });
-  }, [searchQuery, statusFilter, priorityFilter]);
+  }, [tickets, searchQuery, statusFilter, priorityFilter]);
 
   const stats = useMemo(() => ({
-    open: mockTickets.filter((t) => t.status === 'open').length,
-    inProgress: mockTickets.filter((t) => t.status === 'in-progress').length,
-    resolved: mockTickets.filter((t) => t.status === 'resolved').length,
-    closed: mockTickets.filter((t) => t.status === 'closed').length,
-  }), []);
+    open: tickets.filter((t) => t.status === 'open').length,
+    inProgress: tickets.filter((t) => t.status === 'in-progress').length,
+    resolved: tickets.filter((t) => t.status === 'resolved').length,
+    closed: tickets.filter((t) => t.status === 'closed').length,
+  }), [tickets]);
+
+  const handleCreateTicket = (newTicket: Ticket) => {
+    setTickets([newTicket, ...tickets]);
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
 
       <main className="container py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Ticket Dashboard</h1>
-          <p className="text-muted-foreground">
-            Manage and track all support tickets in one place
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Ticket Dashboard</h1>
+            <p className="text-muted-foreground">
+              Manage and track all support tickets in one place
+            </p>
+          </div>
+          <CreateTicketDialog onCreateTicket={handleCreateTicket} />
         </div>
 
         {/* Stats */}
@@ -143,7 +151,7 @@ const Dashboard = () => {
         {/* Results info */}
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-muted-foreground">
-            Showing {filteredTickets.length} of {mockTickets.length} tickets
+            Showing {filteredTickets.length} of {tickets.length} tickets
           </p>
         </div>
 
